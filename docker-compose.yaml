@@ -1,0 +1,27 @@
+services:
+  web:
+    image: sample:latest
+    init: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REPO_URL=${REPO_URL}
+    ports:
+      - "5173:5173"
+    environment:
+      - REPO_URL=${REPO_URL}
+      
+  storybook:
+    image: storybook:latest
+    init: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - REPO_URL=${REPO_URL}
+    ports:
+      - "6006:6006"
+    environment:
+      - REPO_URL=${REPO_URL}
+    command: sh -c "if [ -f package.json ]; then npm run storybook -- --host 0.0.0.0 --ci; else echo 'No package.json found. Please provide a valid REPO_URL.'; fi"
