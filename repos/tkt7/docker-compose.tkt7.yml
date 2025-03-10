@@ -1,0 +1,60 @@
+services:
+  tkt7:
+    image: tkt7:latest
+    init: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT7_REPO_URL=${TKT7_REPO_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt7.rule=Host(`tkt7.localhost`)"
+      - "traefik.http.services.tkt7.loadbalancer.server.port=8910"
+    environment:
+      - TKT7_REPO_URL=${TKT7_REPO_URL}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8910"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  tkt7-storybook:
+    image: tkt7-storybook:latest
+    init: true
+    build:
+      context: ./storybook
+      dockerfile: Dockerfile
+      args:
+        - TKT7_REPO_URL=${TKT7_REPO_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt7-storybook.rule=Host(`tkt7-storybook.localhost`)"
+      - "traefik.http.services.tkt7-storybook.loadbalancer.server.port=6008"
+    environment:
+      - TKT7_REPO_URL=${TKT7_REPO_URL}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:6008"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    external: true

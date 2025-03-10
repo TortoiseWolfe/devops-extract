@@ -1,27 +1,181 @@
+# Base services (databases and tools)
 services:
-  web:
-    image: sample:latest
-    init: true
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - REPO_URL=${REPO_URL}
+  # Traefik reverse proxy
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # DNS config for .localhost domains
+      - "--providers.file.directory=/etc/traefik/config"
+      - "--providers.file.watch=true"
+      # Debug mode for easier troubleshooting
+      - "--log.level=DEBUG"
     ports:
-      - "5173:5173"
+      - "80:80"     # HTTP
+      - "443:443"   # HTTPS
+      - "8081:8080" # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik:/etc/traefik/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
+      - "traefik.http.routers.traefik.service=api@internal"
+    networks:
+      - app-network
+    restart: always
+
+  # Logging service
+  logger:
+    image: gliderlabs/logspout
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: syslog://localhost:514
+    restart: always
+    networks:
+      - app-network
+  # Database services
+  mysql:
+    image: mysql:8.0
+    restart: always
     environment:
-      - REPO_URL=${REPO_URL}
+      - MYSQL_DATABASE=app
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
       
-  storybook:
-    image: storybook:latest
-    init: true
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    restart: always
+    ports:
+      - "8978:8978"
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:8978"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+      
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    depends_on:
+      - mysql
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Development container - defined in main docker-compose file
+  web:
     build:
       context: .
       dockerfile: Dockerfile
       args:
         - REPO_URL=${REPO_URL}
-    ports:
-      - "6006:6006"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.web.rule=Host(`dev.localhost`)"
+      - "traefik.http.services.web.loadbalancer.server.port=5173"
     environment:
       - REPO_URL=${REPO_URL}
-    command: sh -c "if [ -f package.json ]; then npm run storybook -- --host 0.0.0.0 --ci; else echo 'No package.json found. Please provide a valid REPO_URL.'; fi"
+    restart: always
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:5173"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Storybook for development container
+  storybook:
+    build:
+      context: .
+      dockerfile: DockerfileNode
+      args:
+        - REPO_URL=${REPO_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.storybook.rule=Host(`storybook.localhost`)"
+      - "traefik.http.services.storybook.loadbalancer.server.port=6006"
+    environment:
+      - REPO_URL=${REPO_URL}
+    restart: always
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:6006"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
+  # Other application services (defined in separate files)  
+  # These will be included via docker-compose.override.yml or specific app configs
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  cloudbeaver_data:

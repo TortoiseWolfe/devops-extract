@@ -1,0 +1,60 @@
+services:
+  tkt56:
+    image: tkt56:latest
+    init: true
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT56_REPO_URL=${TKT56_REPO_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt56.rule=Host(`tkt56.localhost`)"
+      - "traefik.http.services.tkt56.loadbalancer.server.port=5174"
+    environment:
+      - TKT56_REPO_URL=${TKT56_REPO_URL}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:5174"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  tkt56-storybook:
+    image: tkt56-storybook:latest
+    init: true
+    build:
+      context: ./storybook
+      dockerfile: Dockerfile
+      args:
+        - TKT56_REPO_URL=${TKT56_REPO_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt56-storybook.rule=Host(`tkt56-storybook.localhost`)"
+      - "traefik.http.services.tkt56-storybook.loadbalancer.server.port=6007"
+    environment:
+      - TKT56_REPO_URL=${TKT56_REPO_URL}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:6007"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    external: true

@@ -5,13 +5,13 @@ RUN apk add --no-cache tini git wget
 
 WORKDIR /app
 
-# Repository will be provided via environment variable
-ARG REPO_URL
-ENV REPO_URL=${REPO_URL}
+# Use TKT4_REPO_URL from environment
+ARG TKT4_REPO_URL
+ENV TKT4_REPO_URL=${TKT4_REPO_URL}
 
-# Clone repository if REPO_URL is provided
-RUN if [ -n "$REPO_URL" ]; then \
-      git clone $REPO_URL /tmp/repo && \
+# Clone repository if TKT4_REPO_URL is provided
+RUN if [ -n "$TKT4_REPO_URL" ]; then \
+      git clone $TKT4_REPO_URL /tmp/repo && \
       cp -r /tmp/repo/* /app/ && \
       rm -rf /tmp/repo; \
     fi
@@ -23,24 +23,22 @@ RUN if [ -f "package.json" ]; then \
 
 # Expose Vite's default port
 EXPOSE 5173
-# Expose Storybook's default port
-EXPOSE 6006
 
 # Use tini as entrypoint
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Default to development mode with host flag to expose on all interfaces
-CMD [ "sh", "-c", "echo '🚀 Starting Development Container...' && \
+CMD [ "sh", "-c", "echo '🚀 Starting TKT4 Trivia App...' && \
 if [ -f package.json ]; then \
   echo '✅ Repository cloned successfully' && \
   echo '📦 Found package.json - starting React application' && \
-  echo '🌐 App will be available at http://dev.localhost when ready' && \
+  echo '🌐 App will be available at http://tkt4.localhost when ready' && \
   echo '📊 Traefik Dashboard: http://traefik.localhost:8081' && \
   echo '📂 REPO: https://github.com/TortoiseWolfe/react-trivia' && \
   npm run dev -- --host 0.0.0.0; \
 else \
-  echo '❌ ERROR: No package.json found. Please provide a valid REPO_URL.' && \
-  echo '🔎 REPO_URL setting: ${REPO_URL}' && \
+  echo '❌ ERROR: No package.json found. Please provide a valid TKT4_REPO_URL.' && \
+  echo '🔎 REPO_URL setting: ${TKT4_REPO_URL}' && \
   echo '📋 Check your .env file or command line arguments' && \
   sleep infinity; \
 fi" ]
