@@ -34,7 +34,7 @@ if [ -f package.json ]; then \
   echo '📦 Found package.json - starting React application' && \
   echo '🌐 App will be available at http://tkt4.localhost when ready' && \
   echo '📊 Traefik Dashboard: http://traefik.localhost:8081' && \
-  echo '📂 REPO: https://github.com/TortoiseWolfe/react-trivia' && \
+  echo "📂 REPO: ${TKT4_REPO_URL}" && \
   npm run dev -- --host 0.0.0.0; \
 else \
   echo '❌ ERROR: No package.json found. Please provide a valid TKT4_REPO_URL.' && \

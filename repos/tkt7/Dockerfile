@@ -34,7 +34,7 @@ if [ -f package.json ]; then \
   echo '📦 Found package.json - starting Redwood application' && \
   echo '🌐 App will be available at http://tkt7.localhost when ready' && \
   echo '📊 Traefik Dashboard: http://traefik.localhost:8081' && \
-  echo '📂 REPO: https://github.com/TortoiseWolfe/redwoodblog_Mar_2nd_4pm' && \
+  echo "📂 REPO: ${TKT7_REPO_URL}" && \
   yarn rw dev --fwd=\"--host 0.0.0.0\"; \
 else \
   echo '❌ ERROR: No package.json found. Please provide a valid TKT7_REPO_URL.' && \

@@ -231,11 +231,14 @@ fi
 
 echo ""
 # Use colorize function for consistent color display
-colorize "🔗 ${BLUE}AVAILABLE SERVICES${NC} 🔗"
-colorize "========================================"
+colorize "✨🔗 ${BLUE}AVAILABLE SERVICES${NC} 🔗✨"
+colorize "========================================="
 
-# Database services (always show)
-colorize "${BLUE}📊 DATABASES${NC}"
+# Key services (always show)
+colorize "${BLUE}📊 CORE SERVICES${NC}"
+echo ""
+colorize "  ${ORANGE}🚨 TRAEFIK UI 🚨${NC}  ${GREEN}http://traefik.localhost:8081${NC} ${ORANGE}⬅️ DASHBOARD${NC}"
+echo ""
 colorize "  🐬 MySQL:       http://localhost:3306"
 colorize "  🌐 phpMyAdmin:  http://localhost:8080"
 colorize "  ☁️  CloudBeaver: http://localhost:8978" 
@@ -255,7 +258,6 @@ is_container_running() {
     return $?
 }
 
-echo ""
 colorize "${BLUE}🔑 DATABASE CREDENTIALS${NC}"
 colorize "  👤 Username: ${GREEN}user${NC} (${ORANGE}root${NC} for admin)"
 colorize "  🔒 Password: ${GREEN}password${NC} (${ORANGE}rootpassword${NC} for admin)"
@@ -268,108 +270,79 @@ colorize "  ℹ️  Get help:   ${GREEN}./start.sh --help${NC}"
 colorize "========================================"
 
 # Show consolidated summary at the very end
-colorize "\n${GREEN}📱 APPS SUMMARY${NC}"
-colorize "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+colorize "\n${GREEN}🚀 APPS SUMMARY 🚀${NC}"
+colorize "🌟━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌟"
 
 # Function to check endpoint availability with Traefik integration
 check_endpoint() {
     local url="$1"
     local timeout=2  # 2 second timeout
     
-    # For debugging - show which URL we're checking
-    echo "Checking endpoint: $url" >&2
-    
     # Just return success for now to prevent hanging
-    # We'll implement proper checking after everything is working
     return 0
-    
-    # Disable actual checks for now - causing script to hang
-    # curl -s --head --request GET --connect-timeout "$timeout" "$url" | grep -q "200\|304" 2>/dev/null
-    # return $?
-}
-
-# Function to read a variable from .env file with better edge case handling
-read_env_var() {
-    local var_name="$1"
-    local default_value="${2:-}"
-    
-    if [ -f .env ]; then
-        # Use grep with word boundaries to ensure exact variable name match
-        local value=$(grep -E "^${var_name}=" .env | cut -d= -f2-)
-        if [ -n "$value" ]; then
-            echo "$value"
-        else
-            echo "$default_value"
-        fi
-    else
-        echo "$default_value"
-    fi
 }
 
 # Function to show app status with repo URLs
 print_consolidated_summary() {
     # Load environment variables directly from the file
     source .env
-    # Now TKT4_REPO_URL, TKT56_REPO_URL, TKT7_REPO_URL, and REPO_URL should be set
     
-    # TKT4 - Trivia App
-    colorize "${BLUE}🎮 TKT4 - Trivia App${NC}"
-    if check_endpoint "http://tkt4.localhost"; then
+    # Running apps counter
+    local running_apps=0
+    
+    # Check if TKT4 is configured/running
+    if [ -n "${TKT4_REPO_URL}" ] && docker-compose -f ./repos/tkt4/docker-compose.tkt4.yml ps 2>/dev/null | grep -q "tkt4"; then
+        running_apps=$((running_apps+1))
+        colorize "${BLUE}🎮 TKT4 - Trivia App${NC}"
         colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://tkt4.localhost${NC}"
-    else
-        colorize "  ${ORANGE}○ STANDBY${NC}   URL: ${ORANGE}http://tkt4.localhost${NC}"
-    fi
-    if [ -n "${TKT4_REPO_URL}" ]; then
         colorize "  📂 REPO:      ${GREEN}${TKT4_REPO_URL}${NC}"
-    else
-        colorize "  📂 REPO:      ${RED}Not set! Add to .env: TKT4_REPO_URL=<git-url>${NC}"
+        colorize "  📚 Storybook: http://tkt4-storybook.localhost"
+        echo ""
     fi
-    colorize "  📚 Storybook: http://tkt4-storybook.localhost"
-    echo ""
     
-    # TKT56 - Issue Tracker
-    colorize "${BLUE}🎯 TKT56 - Issue Tracker${NC}"
-    if check_endpoint "http://tkt56.localhost"; then
+    # Check if TKT56 is configured/running
+    if [ -n "${TKT56_REPO_URL}" ] && docker-compose -f ./repos/tkt56/docker-compose.tkt56.yml ps 2>/dev/null | grep -q "tkt56"; then
+        running_apps=$((running_apps+1))
+        colorize "${BLUE}🎯 TKT56 - Issue Tracker${NC}"
         colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://tkt56.localhost${NC}"
-    else
-        colorize "  ${ORANGE}○ STANDBY${NC}   URL: ${ORANGE}http://tkt56.localhost${NC}"
+        colorize "  📂 REPO:      ${GREEN}${TKT56_REPO_URL}${NC}"
+        colorize "  📚 Storybook: http://tkt56-storybook.localhost"
+        echo ""
     fi
-    colorize "  📂 REPO:      ${GREEN}${TKT56_REPO_URL}${NC}"
-    colorize "  📚 Storybook: http://tkt56-storybook.localhost"
-    echo ""
     
-    # TKT7 - Redwood Blog
-    colorize "${BLUE}📝 TKT7 - Redwood Blog${NC}"
-    if check_endpoint "http://tkt7.localhost"; then
+    # Check if TKT7 is configured/running
+    if [ -n "${TKT7_REPO_URL}" ] && docker-compose -f ./repos/tkt7/docker-compose.tkt7.yml ps 2>/dev/null | grep -q "tkt7"; then
+        running_apps=$((running_apps+1))
+        colorize "${BLUE}📝 TKT7 - Redwood Blog${NC}"
         colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://tkt7.localhost${NC}"
-    else
-        colorize "  ${ORANGE}○ STANDBY${NC}   URL: ${ORANGE}http://tkt7.localhost${NC}"
-    fi
-    if [ -n "${TKT7_REPO_URL}" ]; then
         colorize "  📂 REPO:      ${GREEN}${TKT7_REPO_URL}${NC}"
-    else
-        colorize "  📂 REPO:      ${RED}Not set! Add to .env: TKT7_REPO_URL=<git-url>${NC}"
+        colorize "  📚 Storybook: http://tkt7-storybook.localhost"
+        echo ""
     fi
-    colorize "  📚 Storybook: http://tkt7-storybook.localhost"
-    echo ""
     
-    # Development container
-    colorize "${BLUE}🚀 Development Container${NC}"
-    if check_endpoint "http://dev.localhost"; then
+    # Check if dev container is running
+    if docker-compose ps 2>/dev/null | grep -q "web"; then
+        running_apps=$((running_apps+1))
+        colorize "${BLUE}🚀 Development Container${NC}"
         colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://dev.localhost${NC}"
-    else
-        colorize "  ${ORANGE}○ STANDBY${NC}   URL: ${ORANGE}http://dev.localhost${NC}"
-    fi
-    if [ -n "${REPO_URL}" ]; then
         colorize "  📂 REPO:      ${GREEN}${REPO_URL}${NC}"
-    else
-        colorize "  📂 REPO:      ${RED}Not set! Add to .env: REPO_URL=<git-url>${NC}"
+        colorize "  📚 Storybook: http://storybook.localhost"
+        echo ""
     fi
-    colorize "  📚 Storybook: http://storybook.localhost"
+    
+    # If no apps are running, show a message
+    if [ "$running_apps" -eq 0 ]; then
+        colorize "${ORANGE}No applications are currently running.${NC}"
+        colorize "Try starting an app with: ${GREEN}./start.sh [app-name]${NC}"
+        colorize "See options with:         ${GREEN}./start.sh --help${NC}"
+    fi
 }
 
 print_consolidated_summary
-colorize "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+colorize "🌟━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌟"
+
+# Reminder about Traefik dashboard at the very end
+colorize "\n${ORANGE}💻 Don't forget! Traefik Dashboard: ${GREEN}http://traefik.localhost:8081${NC} 🔍"
 
 # Create test script to verify services
 cat > test-services.sh << 'EOF'

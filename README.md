@@ -14,9 +14,9 @@ This repository contains a modular Docker configuration for running multiple app
 
 ## Supported Applications
 
-- **TKT4** - React Trivia App
-- **TKT56** - Issue Tracker App
-- **TKT7** - Redwood Blog App
+- **TKT4** - React Trivia App (https://github.com/TortoiseWolfe/react-trivia)
+- **TKT56** - Issue Tracker App (https://github.com/TortoiseWolfe/nextjs-tutorial)
+- **TKT7** - Redwood Blog App (https://github.com/TortoiseWolfe/redwoodblog_Mar_2nd_4pm)
 - **Legacy Mode** - Backward compatibility with single repository setup
 
 ## Setup
@@ -86,12 +86,19 @@ The start script supports multiple options and can run specific applications:
 
 Set these in the `.env` file or pass them directly to the start script:
 
-- `TKT4_REPO_URL` - Git repository URL for TKT4 app
-- `TKT56_REPO_URL` - Git repository URL for TKT56 app  
-- `TKT7_REPO_URL` - Git repository URL for TKT7 app
+- `TKT4_REPO_URL` - Git repository URL for TKT4 app (React Trivia)
+- `TKT56_REPO_URL` - Git repository URL for TKT56 app (Next.js Tutorial)
+- `TKT7_REPO_URL` - Git repository URL for TKT7 app (Redwood Blog)
 - `REPO_URL` - Legacy repository URL (for backward compatibility)
 
-Example:
+Default Repository URLs:
+```
+TKT4_REPO_URL=https://github.com/TortoiseWolfe/react-trivia
+TKT56_REPO_URL=https://github.com/TortoiseWolfe/nextjs-tutorial
+TKT7_REPO_URL=https://github.com/TortoiseWolfe/redwoodblog_Mar_2nd_4pm
+```
+
+Example usage:
 ```bash
 TKT4_REPO_URL=https://github.com/username/trivia.git ./start.sh tkt4
 ```

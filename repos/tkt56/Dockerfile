@@ -40,6 +40,6 @@ else \
   echo '❌ ERROR: No package.json found. Please provide a valid TKT56_REPO_URL.' && \
   echo '🔎 REPO_URL setting: ${TKT56_REPO_URL}' && \
   echo '📋 Check your .env file or command line arguments' && \
-  echo '📂 REPO: https://github.com/vercel/next-learn' && \
+  echo "📂 REPO: ${TKT56_REPO_URL}" && \
   sleep infinity; \
 fi" ]
