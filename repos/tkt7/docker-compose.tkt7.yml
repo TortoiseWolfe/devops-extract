@@ -7,12 +7,26 @@ services:
       dockerfile: Dockerfile
       args:
         - TKT7_REPO_URL=${TKT7_REPO_URL}
+    ports:
+      - "8910:8910" # For direct access (debug only)
+      - "8911:8911" # For direct access (debug only)
     labels:
       - "traefik.enable=true"
+      # Web UI on port 8910
       - "traefik.http.routers.tkt7.rule=Host(`tkt7.localhost`)"
       - "traefik.http.services.tkt7.loadbalancer.server.port=8910"
+      # API on port 8911
+      - "traefik.http.routers.tkt7-api.rule=Host(`api-tkt7.localhost`)"
+      - "traefik.http.services.tkt7-api.loadbalancer.server.port=8911"
     environment:
       - TKT7_REPO_URL=${TKT7_REPO_URL}
+      - NODE_ENV=development
+      - RWJS_DEV_API_URL=http://api-tkt7.localhost
+      # Database configuration
+      - DATABASE_URL=mysql://user:password@mysql:3306/app
+    # depends_on commented for testing
+    # depends_on:
+    #   - mysql
     healthcheck:
       test: ["CMD", "wget", "--spider", "http://localhost:8910"]
       interval: 10s
@@ -26,6 +40,23 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    
+  # Include mysql service in case it's not running in the main compose
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_DATABASE=app
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    profiles:
+      - mysql-standalone
+    # Only used if main mysql service isn't available
 
   tkt7-storybook:
     image: tkt7-storybook:latest
@@ -35,6 +66,8 @@ services:
       dockerfile: Dockerfile
       args:
         - TKT7_REPO_URL=${TKT7_REPO_URL}
+    ports:
+      - "6009:6008"  # Direct port access - use 6009 to avoid conflicts
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tkt7-storybook.rule=Host(`tkt7-storybook.localhost`)"
@@ -58,3 +91,8 @@ services:
 networks:
   app-network:
     external: true
+
+volumes:
+  mysql_data:
+    name: tkt7_mysql_data
+    # This volume will only be used if the main mysql service isn't running

@@ -120,6 +120,8 @@ services:
       dockerfile: Dockerfile
       args:
         - REPO_URL=${REPO_URL}
+    ports:
+      - "5173:5173"  # Direct port access - no hosts file needed!
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`dev.localhost`)"
@@ -141,6 +143,66 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Python environment for TKT0
+  python_notebook:
+    image: jupyter/scipy-notebook:latest
+    ports:
+      - "8888:8888"  # Jupyter Notebook
+    volumes:
+      - ./data/python:/home/jovyan/work
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.python.rule=Host(`python.localhost`)"
+      - "traefik.http.services.python.loadbalancer.server.port=8888"
+    command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''", "--ip=0.0.0.0"]
+    restart: always
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Python Flask environment for web development
+  python_flask:
+    build:
+      context: ./repos/tkt0
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"  # Flask app
+    volumes:
+      - ./repos/tkt0:/app
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.flask.rule=Host(`flask.localhost`)"
+      - "traefik.http.services.flask.loadbalancer.server.port=5000"
+    restart: always
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:5000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # Storybook for development container
   storybook:
     build:
@@ -148,12 +210,48 @@ services:
       dockerfile: DockerfileNode
       args:
         - REPO_URL=${REPO_URL}
+    ports:
+      - "6006:6006"  # Direct port access - no hosts file needed!
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.storybook.rule=Host(`storybook.localhost`)"
       - "traefik.http.services.storybook.loadbalancer.server.port=6006"
     environment:
       - REPO_URL=${REPO_URL}
+    command: [
+      "sh", "-c", 
+      "echo -e '\\n\\n🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷' && \
+       echo '🚀 MAIN DEVELOPMENT APP 💻' && \
+       echo '📚 STORYBOOK SERVICE STARTING 📚' && \
+       echo '🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷' && \
+       if [ -d /app ]; then cd /app; fi && \
+       if [ -f package.json ]; then \
+         if grep -q '\"storybook\"' package.json || [ -d '.storybook' ] || [ -d 'storybook' ]; then \
+           echo '🎉 Storybook configuration detected!' && \
+           echo '🌐 Storybook will be available at http://localhost:6006 when ready' && \
+           npm run storybook -- --host 0.0.0.0 || yarn storybook --host 0.0.0.0; \
+         else \
+           echo -e '\\n🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡' && \
+           echo '⚠️  MAIN DEVELOPMENT APP ⚠️' && \
+           echo '⚠️  NO STORYBOOK CONFIGURATION FOUND ⚠️' && \
+           echo '🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡' && \
+           echo '\\n💡 TIP: If you want to use Storybook with this project:' && \
+           echo '  1. Add Storybook to your project with: npx storybook@latest init' && \
+           echo '  2. Commit the changes to your repository' && \
+           echo '  3. Restart this container' && \
+           echo '\\n✅ Storybook container will exit gracefully.\\n' && \
+           exit 0; \
+         fi; \
+       else \
+         echo -e '\\n🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴' && \
+         echo '❌ MAIN DEVELOPMENT APP ❌' && \
+         echo '❌ ERROR: No package.json found in repository ❌' && \
+         echo '🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴' && \
+         echo '\\n🔎 REPO_URL setting: ${REPO_URL}' && \
+         echo '📋 Check your .env file or command line arguments' && \
+         exit 1; \
+       fi"
+    ]
     restart: always
     networks:
       - app-network

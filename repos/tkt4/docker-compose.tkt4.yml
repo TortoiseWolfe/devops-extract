@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
       args:
         - TKT4_REPO_URL=${TKT4_REPO_URL}
+    ports:
+      - "5174:5173"  # Direct port access - use 5174 to avoid conflict with main app
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tkt4.rule=Host(`tkt4.localhost`)"
@@ -35,6 +37,8 @@ services:
       dockerfile: Dockerfile
       args:
         - TKT4_REPO_URL=${TKT4_REPO_URL}
+    ports:
+      - "6007:6006"  # Direct port access - use 6007 to avoid conflict with main storybook
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tkt4-storybook.rule=Host(`tkt4-storybook.localhost`)"

@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
       args:
         - TKT56_REPO_URL=${TKT56_REPO_URL}
+    ports:
+      - "5175:5174"  # Direct port access - use unique port to avoid conflicts
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tkt56.rule=Host(`tkt56.localhost`)"
@@ -35,6 +37,8 @@ services:
       dockerfile: Dockerfile
       args:
         - TKT56_REPO_URL=${TKT56_REPO_URL}
+    ports:
+      - "6008:6007"  # Direct port access - use unique port to avoid conflicts
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tkt56-storybook.rule=Host(`tkt56-storybook.localhost`)"

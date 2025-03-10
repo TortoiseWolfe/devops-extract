@@ -41,6 +41,7 @@ show_help() {
     echo "  -h, --help     Show this help message"
     echo ""
     echo "Applications:"
+    echo "  tkt0           Python Advanced Problem Solving"
     echo "  tkt4           React Trivia App" 
     echo "  tkt56          Issue Tracker App"
     echo "  tkt7           Redwood Blog App"
@@ -67,7 +68,7 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             show_help
             ;;
-        tkt4|tkt56|tkt7)
+        tkt0|tkt4|tkt56|tkt7)
             apps_to_start+=("$1")
             shift
             ;;
@@ -84,6 +85,21 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Display configured repos at the beginning in a compact, visible way
+echo -e "\n\033[1;35m🔍 REPOSITORIES 🔍\033[0m"
+
+# Load env variables from .env file if it exists
+if [ -f .env ]; then
+    source .env
+fi
+
+# Show configured repos in a single line each with color coding
+echo -e "\033[1;36m🐍 TKT0:\033[0m \033[1;33mPython Advanced Problem Solving (Local)\033[0m"
+[ -n "$REPO_URL" ] && echo -e "\033[1;36m🚀 MAIN:\033[0m \033[1;33m$REPO_URL\033[0m" || echo -e "\033[1;30m🚀 MAIN: Not configured\033[0m"
+[ -n "$TKT4_REPO_URL" ] && echo -e "\033[1;34m🎮 TKT4:\033[0m \033[1;33m$TKT4_REPO_URL\033[0m" || echo -e "\033[1;30m🎮 TKT4: Not configured\033[0m"
+[ -n "$TKT56_REPO_URL" ] && echo -e "\033[1;32m📋 TKT56:\033[0m \033[1;33m$TKT56_REPO_URL\033[0m" || echo -e "\033[1;30m📋 TKT56: Not configured\033[0m"
+[ -n "$TKT7_REPO_URL" ] && echo -e "\033[1;35m📝 TKT7:\033[0m \033[1;33m$TKT7_REPO_URL\033[0m" || echo -e "\033[1;30m📝 TKT7: Not configured\033[0m"
 
 # Create .env file if it doesn't exist
 touch .env
@@ -151,12 +167,24 @@ else
 
     # Start requested or all apps
     if [ "$all_apps" = true ]; then
-        apps_to_start=("tkt4" "tkt56" "tkt7")
+        apps_to_start=("tkt0" "tkt4" "tkt56" "tkt7")
     fi
 
     # Check and start each requested app
     for app in "${apps_to_start[@]}"; do
         case "$app" in
+            tkt0)
+                echo "Starting tkt0 (Python Advanced Problem Solving)..."
+                
+                # Start Python services without needing external repo
+                docker-compose -f ./repos/tkt0/docker-compose.tkt0.yml build --no-cache
+                docker-compose -f ./repos/tkt0/docker-compose.tkt0.yml up -d
+                
+                # Show URLs right away
+                echo "TKT0 Jupyter Notebook: http://localhost:8888"
+                echo "TKT0 Flask App:        http://localhost:5000"
+                ;;
+                
             tkt4)
                 # Check if TKT4_REPO_URL is set
                 if ! grep -q "TKT4_REPO_URL=" .env || grep -q "TKT4_REPO_URL=$" .env; then
@@ -231,18 +259,11 @@ fi
 
 echo ""
 # Use colorize function for consistent color display
-colorize "✨🔗 ${BLUE}AVAILABLE SERVICES${NC} 🔗✨"
-colorize "========================================="
+colorize "✨ ${BLUE}SERVICES${NC} ✨"
 
-# Key services (always show)
-colorize "${BLUE}📊 CORE SERVICES${NC}"
-echo ""
-colorize "  ${ORANGE}🚨 TRAEFIK UI 🚨${NC}  ${GREEN}http://traefik.localhost:8081${NC} ${ORANGE}⬅️ DASHBOARD${NC}"
-echo ""
-colorize "  🐬 MySQL:       http://localhost:3306"
-colorize "  🌐 phpMyAdmin:  http://localhost:8080"
-colorize "  ☁️  CloudBeaver: http://localhost:8978" 
-echo ""
+# Key services with full URLs
+colorize "🐬 MySQL: ${GREEN}localhost:3306${NC} | 🌐 phpMyAdmin: ${GREEN}http://localhost:8080${NC}"
+colorize "☁️ CloudBeaver: ${GREEN}http://localhost:8978${NC} | ${ORANGE}🚨 TRAEFIK: ${GREEN}http://localhost:8081${NC}"
 
 # Function to check if a container is running
 is_container_running() {
@@ -258,20 +279,24 @@ is_container_running() {
     return $?
 }
 
-colorize "${BLUE}🔑 DATABASE CREDENTIALS${NC}"
-colorize "  👤 Username: ${GREEN}user${NC} (${ORANGE}root${NC} for admin)"
-colorize "  🔒 Password: ${GREEN}password${NC} (${ORANGE}rootpassword${NC} for admin)"
-colorize "  🗄️ Database: ${GREEN}app${NC}"
-echo ""
-colorize "${BLUE}📋 HELPFUL COMMANDS${NC}"
-colorize "  📊 View logs:  ${GREEN}docker-compose logs -f [service]${NC}"
-colorize "  ✅ Run tests:  ${GREEN}./test-services.sh${NC}"
-colorize "  ℹ️  Get help:   ${GREEN}./start.sh --help${NC}"
-colorize "========================================"
+# This info is now moved to the end for better readability
+
+# Show memory usage summary
+colorize "\n${BLUE}💾 MEMORY USAGE SUMMARY 💾${NC}"
+echo "$(docker stats --no-stream --format "{{.Name}}: {{.MemUsage}}")" | while read line; do
+    container_name=$(echo $line | cut -d':' -f1)
+    mem_usage=$(echo $line | cut -d':' -f2)
+    colorize "   ${container_name}: ${ORANGE}${mem_usage}${NC}"
+done
+colorize "   ${YELLOW}TIP: Use 'docker-compose stop <service>' to pause services you don't need${NC}"
+colorize "   ${YELLOW}     e.g., 'docker-compose stop python_notebook' to free up Jupyter resources${NC}"
+
+# Calculate total memory usage
+total_mem=$(docker stats --no-stream --format "{{.MemPerc}}" | sed 's/%//' | awk '{sum+=$1} END {print sum}')
+colorize "   ${GREEN}Total Memory Usage: ${ORANGE}${total_mem}%${NC} of host RAM\n"
 
 # Show consolidated summary at the very end
-colorize "\n${GREEN}🚀 APPS SUMMARY 🚀${NC}"
-colorize "🌟━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌟"
+colorize "\n${GREEN}🚀 RUNNING APPS 🚀${NC}"
 
 # Function to check endpoint availability with Traefik integration
 check_endpoint() {
@@ -282,7 +307,7 @@ check_endpoint() {
     return 0
 }
 
-# Function to show app status with repo URLs
+# Function to show app status with repo URLs and clickable links
 print_consolidated_summary() {
     # Load environment variables directly from the file
     source .env
@@ -290,44 +315,45 @@ print_consolidated_summary() {
     # Running apps counter
     local running_apps=0
     
+    # Check if TKT0 is running - check main docker-compose.yaml Python services
+    if docker-compose ps 2>/dev/null | grep -q "python"; then
+        running_apps=$((running_apps+1))
+        colorize "${BLUE}🐍 TKT0 PYTHON${NC} ${GREEN}● ACTIVE${NC}"
+        colorize "   🌐 Jupyter: ${GREEN}http://localhost:8888${NC}"
+        colorize "   🌐 Flask: ${GREEN}http://localhost:5000${NC}"
+    fi
+    
     # Check if TKT4 is configured/running
     if [ -n "${TKT4_REPO_URL}" ] && docker-compose -f ./repos/tkt4/docker-compose.tkt4.yml ps 2>/dev/null | grep -q "tkt4"; then
         running_apps=$((running_apps+1))
-        colorize "${BLUE}🎮 TKT4 - Trivia App${NC}"
-        colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://tkt4.localhost${NC}"
-        colorize "  📂 REPO:      ${GREEN}${TKT4_REPO_URL}${NC}"
-        colorize "  📚 Storybook: http://tkt4-storybook.localhost"
-        echo ""
+        colorize "${BLUE}🎮 TKT4 TRIVIA${NC} ${GREEN}● ACTIVE${NC}"
+        colorize "   🌐 App: ${GREEN}http://localhost:5174${NC}"
+        colorize "   📚 Storybook: ${GREEN}http://localhost:6007${NC}"
     fi
     
     # Check if TKT56 is configured/running
     if [ -n "${TKT56_REPO_URL}" ] && docker-compose -f ./repos/tkt56/docker-compose.tkt56.yml ps 2>/dev/null | grep -q "tkt56"; then
         running_apps=$((running_apps+1))
-        colorize "${BLUE}🎯 TKT56 - Issue Tracker${NC}"
-        colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://tkt56.localhost${NC}"
-        colorize "  📂 REPO:      ${GREEN}${TKT56_REPO_URL}${NC}"
-        colorize "  📚 Storybook: http://tkt56-storybook.localhost"
-        echo ""
+        colorize "${BLUE}🎯 TKT56 ISSUES${NC} ${GREEN}● ACTIVE${NC}"
+        colorize "   🌐 App: ${GREEN}http://localhost:5175${NC}"
+        colorize "   📚 Storybook: ${GREEN}http://localhost:6008${NC}"
     fi
     
     # Check if TKT7 is configured/running
     if [ -n "${TKT7_REPO_URL}" ] && docker-compose -f ./repos/tkt7/docker-compose.tkt7.yml ps 2>/dev/null | grep -q "tkt7"; then
         running_apps=$((running_apps+1))
-        colorize "${BLUE}📝 TKT7 - Redwood Blog${NC}"
-        colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://tkt7.localhost${NC}"
-        colorize "  📂 REPO:      ${GREEN}${TKT7_REPO_URL}${NC}"
-        colorize "  📚 Storybook: http://tkt7-storybook.localhost"
-        echo ""
+        colorize "${BLUE}📝 TKT7 REDWOOD${NC} ${GREEN}● ACTIVE${NC}"
+        colorize "   🌐 App: ${GREEN}http://localhost:8910${NC}"
+        colorize "   🌐 API: ${GREEN}http://localhost:8911${NC}"
+        colorize "   📚 Storybook: ${GREEN}http://localhost:6009${NC}"
     fi
     
     # Check if dev container is running
     if docker-compose ps 2>/dev/null | grep -q "web"; then
         running_apps=$((running_apps+1))
-        colorize "${BLUE}🚀 Development Container${NC}"
-        colorize "  ${GREEN}● ACTIVE${NC}    URL: ${GREEN}http://dev.localhost${NC}"
-        colorize "  📂 REPO:      ${GREEN}${REPO_URL}${NC}"
-        colorize "  📚 Storybook: http://storybook.localhost"
-        echo ""
+        colorize "${BLUE}🚀 MAIN DEV${NC} ${GREEN}● ACTIVE${NC}"
+        colorize "   🌐 App: ${GREEN}http://localhost:5173${NC}"
+        colorize "   📚 Storybook: ${GREEN}http://localhost:6006${NC}"
     fi
     
     # If no apps are running, show a message
@@ -339,10 +365,20 @@ print_consolidated_summary() {
 }
 
 print_consolidated_summary
-colorize "🌟━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━🌟"
 
-# Reminder about Traefik dashboard at the very end
-colorize "\n${ORANGE}💻 Don't forget! Traefik Dashboard: ${GREEN}http://traefik.localhost:8081${NC} 🔍"
+# Show banner at the end with DB credentials
+colorize "${BLUE}🔑 DATABASE INFO${NC}"
+colorize "   👤 Username: ${GREEN}user${NC} (${ORANGE}root${NC} for admin)"
+colorize "   🔒 Password: ${GREEN}password${NC} (${ORANGE}rootpassword${NC} for admin)"
+colorize "   🗄️ Database: ${GREEN}app${NC}"
+
+# Helpful commands and info
+colorize "${BLUE}📋 HELPFUL COMMANDS${NC}"
+colorize "   📊 View logs: ${GREEN}docker-compose logs -f [service]${NC}"
+colorize "   ✅ Test: ${GREEN}./test-services.sh${NC}"
+colorize "   ℹ️ Help: ${GREEN}./start.sh --help${NC}"
+
+colorize "─────────────────────────────────────────"
 
 # Create test script to verify services
 cat > test-services.sh << 'EOF'
