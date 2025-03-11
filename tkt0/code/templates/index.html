@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Your Python Development Environment!</h1>
+        <div class="card">
+            <h2>Getting Started</h2>
+            <p>This is your starter Flask application. Edit the files in <code>/workspace/code</code> to customize your app.</p>
+            <p>Visit <a href="/tutorial">the tutorial page</a> for more information on how to develop with Flask.</p>
+        </div>
+        
+        <div class="card">
+            <h2>Development Workflow</h2>
+            <ol>
+                <li>Edit the code in the mounted volume</li>
+                <li>Flask will automatically reload when you save changes</li>
+                <li>Access Jupyter at <a href="http://jupyter.localhost" target="_blank">http://jupyter.localhost</a></li>
+            </ol>
+        </div>
+        
+        <div class="card">
+            <h2>Repository Information</h2>
+            {% if repo_url %}
+            <p>Your code is linked to: <code>{{ repo_url }}</code></p>
+            <h3>About Your Repository</h3>
+            <p><strong>Important:</strong> This environment is <em>trying</em> to use your repository, but it may still be empty or not fully set up.</p>
+            <p>Check if <code>/workspace/code</code> has your expected files:</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+ls -la /workspace/code</pre>
+            </div>
+            <p>If you see only a <code>.git</code> directory or just this starter app, your repository may be empty - this is normal for new repositories.</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+cd /workspace/code
+# Make your changes to the files
+git add .
+git commit -m "Update my Flask app"
+git push origin main</pre>
+            </div>
+            
+            <h3>GitHub Authentication Setup</h3>
+            <p>Before you can push code, you need to set up Git with your identity:</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Configure Git with your identity
+git config --global user.name {% if git_user_name %}"{{ git_user_name }}"{% else %}"Your Name"{% endif %}
+git config --global user.email {% if git_user_email %}"{{ git_user_email }}"{% else %}"your.email@example.com"{% endif %}</pre>
+            </div>
+            {% if git_user_name and git_user_email %}
+            <p class="success-message">✅ Git identity already configured from your .env file!</p>
+            {% endif %}
+            
+            <p>Then, choose one of these authentication methods:</p>
+            
+            <h4>Option 1: Use Personal Access Token (Simplest)</h4>
+            <ol>
+                <li>Go to GitHub → Settings → Developer settings → <a href="https://github.com/settings/tokens" target="_blank">Personal access tokens</a></li>
+                <li>Create a token with "repo" permissions</li>
+                <li>Use HTTPS URL and when prompted for password, use your token</li>
+                <li>You can switch your repo to HTTPS with:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+git remote set-url origin {{ repo_url }}</pre>
+                    </div>
+                </li>
+            </ol>
+            
+            <h4>Option 2: SSH Setup (More Advanced)</h4>
+            <ol>
+                <li>Check if you have SSH keys already:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+ls -la ~/.ssh</pre>
+                    </div>
+                </li>
+                <li>If needed, create new SSH key (use a strong passphrase for security):
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+ssh-keygen -t ed25519 -C {% if git_user_email %}"{{ git_user_email }}"{% else %}"your.email@example.com"{% endif %}</pre>
+                    </div>
+                </li>
+                <li>Add your key to the SSH agent:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519</pre>
+                    </div>
+                </li>
+                <li>Copy your public key:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+cat ~/.ssh/id_ed25519.pub</pre>
+                    </div>
+                </li>
+                <li>Add it to <a href="https://github.com/settings/keys" target="_blank">GitHub SSH settings</a></li>
+                <li>Test your SSH connection:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+ssh -T git@github.com</pre>
+                    </div>
+                </li>
+            </ol>
+            {% else %}
+            <p><strong>No repository configured yet.</strong> Follow these steps:</p>
+            
+            <h3>Step 1: Configure Your Identity</h3>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Configure Git with your identity
+git config --global user.name {% if git_user_name %}"{{ git_user_name }}"{% else %}"Your Name"{% endif %} 
+git config --global user.email {% if git_user_email %}"{{ git_user_email }}"{% else %}"your.email@example.com"{% endif %}</pre>
+            </div>
+            {% if git_user_name and git_user_email %}
+            <p class="success-message">✅ Git identity already configured from your .env file!</p>
+            {% endif %}
+            
+            <h3>Step 2: Create a GitHub Repository</h3>
+            <ol>
+                <li>Go to <a href="https://github.com/new" target="_blank">github.com/new</a></li>
+                <li>Name your repository (e.g., "my-flask-app")</li>
+                <li>Choose "Public" or "Private"</li>
+                <li>Do NOT initialize with README, .gitignore, or license</li>
+                <li>Click "Create repository"</li>
+            </ol>
+            
+            <h3>Step 3: Create a Simple Flask App and Push It</h3>
+            <p>First, let's create a very simple "Hello World" Flask app:</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Create a file called hello.py with this content:
+# ----------------------------------------------
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello_world():
+    return 'Hello, World! My first Flask app.'
+
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0')
+# ----------------------------------------------</pre>
+            </div>
+            
+            <p>Now, initialize the repository and push your code:</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+cd /workspace/code
+git init
+git add .
+git commit -m "Initial commit with Flask app"
+git branch -M main
+# Use your actual GitHub repository URL below:
+git remote add origin {{ repo_url }}
+git push -u origin main</pre>
+            </div>
+            
+            <h3>Step 4: Set Up Authentication</h3>
+            <p>Choose one of these authentication methods:</p>
+            
+            <h4>Option 1: HTTPS with Personal Access Token (Recommended for Beginners)</h4>
+            <ol>
+                <li>URL format: <code>https://github.com/username/repository.git</code></li>
+                <li>Create a token at GitHub → Settings → <a href="https://github.com/settings/tokens" target="_blank">Personal access tokens</a></li>
+                <li>When pushing, use your token as the password</li>
+            </ol>
+            
+            <h4>Option 2: SSH (For Advanced Users)</h4>
+            <ol>
+                <li>URL format: <code>git@github.com:username/repository.git</code></li>
+                <li>Generate SSH key (with a strong passphrase): <code>ssh-keygen -t ed25519 -C {% if git_user_email %}"{{ git_user_email }}"{% else %}"your.email@example.com"{% endif %}</code></li>
+                <li>Add your key to the SSH agent: 
+                    <code>eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519</code>
+                </li>
+                <li>Add key to GitHub: <a href="https://github.com/settings/keys" target="_blank">SSH keys settings</a></li>
+                <li>Test your connection: <code>ssh -T git@github.com</code></li>
+            </ol>
+            {% endif %}
+        </div>
+    </div>
+    <script>
+        function copyCode(button) {
+            const pre = button.nextElementSibling;
+            const code = pre.textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                // Change button text to "Copied!"
+                button.textContent = "Copied!";
+                
+                // Reset button text after 2 seconds
+                setTimeout(() => {
+                    button.textContent = "Copy";
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy code');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+services:
+  tkt56-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT56_REPO_URL=${TKT56_REPO_URL}
+    container_name: devops-tkt56-web
+    ports:
+      - "5175:5175"
+    environment:
+      - TKT56_REPO_URL=${TKT56_REPO_URL}
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt56.rule=Host(`tkt56.localhost`)"
+      - "traefik.http.services.tkt56.loadbalancer.server.port=5175"
+
+  tkt56-storybook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT56_REPO_URL=${TKT56_REPO_URL}
+    container_name: devops-tkt56-storybook
+    ports:
+      - "6008:6006"
+    environment:
+      - TKT56_REPO_URL=${TKT56_REPO_URL}
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt56-storybook.rule=Host(`tkt56-storybook.localhost`)"
+      - "traefik.http.services.tkt56-storybook.loadbalancer.server.port=6006"
+    command: ["npm", "run", "storybook", "--", "--port", "6006", "--host", "0.0.0.0"]
+
+networks:
+  app-network:
+    external: true

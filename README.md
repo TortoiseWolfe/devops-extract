@@ -1,226 +1,382 @@
-# Multi-Repository DevOps Configuration
+# DevOps Multi-App Development Environment
 
-This repository contains a modular Docker configuration for running multiple applications from different repositories with shared database services. This setup is designed for local development environments.
+A Docker-based development environment for multiple applications with shared infrastructure. All application code is pulled from external repositories.
 
-## Features
+## Core Features
 
-- **Multiple App Support** - Deploy and run multiple apps from different repositories
-- **App-specific Storybook** - Each app has its own Storybook instance
-- **Shared Database** - Central MySQL database for all applications
-- **Database Management** - phpMyAdmin and CloudBeaver for database administration
-- **Modular Architecture** - Add new apps without affecting existing ones
-- **Health Monitoring** - Automatic health checks for all services
-- **Direct Port Access** - Applications accessible via localhost with unique port numbers
+- **Repository-First Architecture**: All applications are imported from external Git repositories
+- **Shared Infrastructure**: MySQL, phpMyAdmin, CloudBeaver, and Traefik
+- **Standardized App Integration**: Consistent pattern for all applications
+- **Resource Management**: Selective startup and monitoring
 
-## Note on Development Use
+## Getting Started
 
-This configuration is optimized for local development and includes:
-- Plain-text database credentials (not for production use)
-- HTTP-only services (no HTTPS configuration)
-- Exposed admin tools without additional authentication
-
-## Supported Applications
-
-- **TKT4** - React Trivia App (https://github.com/TortoiseWolfe/react-trivia)
-- **TKT56** - Issue Tracker App (https://github.com/TortoiseWolfe/nextjs-tutorial)
-- **TKT7** - Redwood Blog App (https://github.com/TortoiseWolfe/redwoodblog_Mar_2nd_4pm)
-  - Full-stack app with separate API and web servers
-  - Includes GraphQL API server and database migrations
-  - Requires special configuration for Prisma and MySQL
-- **Legacy Mode** - Backward compatibility with single repository setup
-
-## Setup
-
-### Prerequisites
-
-- Docker and Docker Compose
-- Git
-- Bash shell
-
-### Quick Start
-
-1. Clone this repository:
-   ```bash
-   git clone <repository-url>
-   cd devops-extract
+1. Configure repository URLs in `.env` file:
+   ```
+   TKT0_REPO_URL=https://github.com/yourusername/python-learning
+   TKT4_REPO_URL=https://github.com/yourusername/react-trivia
+   TKT56_REPO_URL=https://github.com/yourusername/nextjs-tutorial
+   TKT7_REPO_URL=https://github.com/yourusername/redwoodblog
    ```
 
-2. Make the scripts executable:
-   ```bash
-   chmod +x start.sh test-services.sh
+2. Start the environment:
+   ```
+   ./start.sh --all     # Start all configured apps
+   ./start.sh tkt0      # Start only TKT0 (Python development environment)
+   ./start.sh tkt4      # Start only TKT4 (React Trivia app)
    ```
 
-3. No host file modification required - all services use direct port access.
-
-4. Run the start script with an application name and its repository URL:
-   ```bash
-   TKT4_REPO_URL=https://github.com/username/trivia-app.git ./start.sh tkt4
+3. Verify services:
    ```
-
-   This will:
-   - Store the repository URL in a .env file
-   - Build and start the Docker containers for the selected app
-   - Display URLs for accessing the services
-
-5. Verify services are running correctly:
-   ```bash
    ./test-services.sh
    ```
 
-## Usage
+## Python Learning Environment (TKT0)
 
-The start script supports multiple options and can run specific applications:
+Our Python environment (TKT0) provides a full Flask and Jupyter setup for learning Python and web development.
 
-```bash
-# Run the legacy setup (backward compatibility)
-./start.sh https://github.com/username/repo.git
+### Getting Started with Flask
 
-# Start a specific app
-./start.sh tkt4
-
-# Start multiple apps
-./start.sh tkt4 tkt56
-
-# Start all apps
-./start.sh --all
-
-# View help
-./start.sh --help
-```
-
-### Environment Variables
-
-Set these in the `.env` file or pass them directly to the start script:
-
-- `TKT4_REPO_URL` - Git repository URL for TKT4 app (React Trivia)
-- `TKT56_REPO_URL` - Git repository URL for TKT56 app (Next.js Tutorial)
-- `TKT7_REPO_URL` - Git repository URL for TKT7 app (Redwood Blog)
-- `REPO_URL` - Legacy repository URL (for backward compatibility)
-
-Default Repository URLs:
-```
-TKT4_REPO_URL=https://github.com/TortoiseWolfe/react-trivia
-TKT56_REPO_URL=https://github.com/TortoiseWolfe/nextjs-tutorial
-TKT7_REPO_URL=https://github.com/TortoiseWolfe/redwoodblog_Mar_2nd_4pm
-```
-
-Example usage:
-```bash
-TKT4_REPO_URL=https://github.com/username/trivia.git ./start.sh tkt4
-```
-
-### Available Services
-
-#### Base Services
-- MySQL Database: localhost:3306
-- phpMyAdmin: http://localhost:8080
-- CloudBeaver: http://localhost:8978
-- 🚨 Traefik Dashboard: http://localhost:8081 (monitoring & routing visualization)
-
-#### App Services (Direct Port Access)
-- Development App: http://localhost:5173
-- Development Storybook: http://localhost:6006
-- TKT4 Trivia App: http://localhost:5174
-- TKT4 Storybook: http://localhost:6007
-- TKT56 Issue Tracker: http://localhost:5175
-- TKT56 Storybook: http://localhost:6008
-- TKT7 Redwood Blog: http://localhost:8910
-- TKT7 API Server: http://localhost:8911 (Redwood's GraphQL API)
-- TKT7 Storybook: http://localhost:6009
-
-### Database Credentials
-
-- Username: user (or root for admin)
-- Password: password (or rootpassword for admin)
-- Database name: app
-
-## Architecture
-
-The system uses a modular architecture:
-
-1. **Base Infrastructure** - Defined in the main docker-compose.yaml
-   - 🚨 **Traefik reverse proxy** - Provides routing and monitoring dashboard at http://traefik.localhost:8081
-   - MySQL database
-   - phpMyAdmin
-   - CloudBeaver
-   - Centralized logging
-
-2. **Application-specific Services** - Each app has its own directory in repos/
-   - Individual Dockerfile
-   - App-specific docker-compose.yml file
-   - Storybook configuration
-   - Dedicated logging configuration
-   - Traefik labels for hostname-based routing
-
-3. **Networking** - All services share a common network for communication
-   - Direct port access via localhost with unique port numbers
-   - No port conflicts between services due to careful port mapping
-
-4. **Logging** - Each container has JSON logging configured
-   - Log rotation with 10MB maximum file size
-   - Retains 3 log files per container
-   - View logs with `docker-compose logs [service]`
-
-## Testing
-
-Verify all running services:
-
-```bash
-./test-services.sh
-```
-
-This script:
-- Tests all running services via HTTP requests
-- Shows Docker container status
-- Displays health check information
-- Provides clear pass/fail output
-
-## Adding New Applications
-
-To add a new application:
-
-1. Create a directory for the app in the `repos/` directory
-2. Add a Dockerfile and a docker-compose.yml file following the existing templates
-3. Update the start script to support the new app
-
-## Troubleshooting
-
-If services aren't running properly:
-
-1. Check the **Traefik Dashboard** for service health:
+1. **Start the Python environment**:
    ```
-   🚨 http://localhost:8081 🚨
+   ./start.sh tkt0
    ```
-   The dashboard shows all active services and their health status.
 
-2. Run the test script to identify issues:
+2. **Access the Web Interface**:
+   - Open http://localhost:5000 in your browser
+   - You'll see the welcome page with setup instructions
+
+### Step-by-Step Tutorial: Building Your First Flask App
+
+Once the environment is running, follow these steps to create a simple Flask app:
+
+1. **Create a Basic Flask File**:
    ```bash
-   ./test-services.sh
+   # Access the container shell
+   docker exec -it devops-tkt0-dev bash
+   
+   # Navigate to your code directory
+   cd /workspace/code
+   
+   # Create hello.py with a text editor
+   nano hello.py
    ```
 
-3. Check container logs:
+   Add this code to your file:
+   ```python
+   from flask import Flask
+
+   app = Flask(__name__)
+
+   @app.route('/')
+   def hello_world():
+       return 'Hello, World! My first Flask app.'
+
+   if __name__ == '__main__':
+       app.run(debug=True, host='0.0.0.0')
+   ```
+
+2. **Run Your App**:
    ```bash
-   docker-compose logs mysql
-   docker-compose -f ./repos/tkt4/docker-compose.tkt4.yml logs tkt4
+   python hello.py
    ```
+   Visit http://localhost:5000 to see your app!
 
-4. For Git repository cloning issues:
-   - Verify the repository URLs in your .env file
-   - Check that the repositories are accessible
-   - Look for error messages in the container logs
-
-5. For container dependency issues:
-   - Some services may start before their dependencies are fully ready
-   - Check the container health status: `docker ps`
-
-6. Restart services:
+3. **Add HTML Templates**:
    ```bash
-   ./start.sh tkt4
+   # Create a templates folder
+   mkdir -p templates
+   
+   # Create an HTML template
+   nano templates/hello.html
    ```
 
-## Known Limitations
+   Add this HTML code:
+   ```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <title>My First Flask App</title>
+       <style>
+           body {
+               font-family: Arial, sans-serif;
+               margin: 0;
+               padding: 30px;
+               background-color: #f5f5f5;
+           }
+           .container {
+               max-width: 800px;
+               margin: 0 auto;
+               background-color: white;
+               padding: 20px;
+               border-radius: 10px;
+               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+           }
+           h1 {
+               color: #4285f4;
+           }
+       </style>
+   </head>
+   <body>
+       <div class="container">
+           <h1>Hello, World!</h1>
+           <p>My name is <strong>{{ name }}</strong> and this is my first Flask app!</p>
+           <p>The current time is: <strong>{{ current_time }}</strong></p>
+       </div>
+   </body>
+   </html>
+   ```
 
-- **Docker Compose Version**: No explicit version is specified in the docker-compose files
-- **Performance**: Building with `--no-cache` can be slow; use regular builds when possible
-- **Container Efficiency**: Each app builds its own Node.js container
-- **Error Handling**: Some edge cases in repository cloning may not be handled optimally
+4. **Update Your Flask App to Use Templates**:
+   ```bash
+   nano hello.py
+   ```
+
+   Replace the content with:
+   ```python
+   from flask import Flask, render_template
+   from datetime import datetime
+
+   app = Flask(__name__)
+
+   @app.route('/')
+   def hello_world():
+       # Get the current time
+       now = datetime.now().strftime("%H:%M:%S")
+       
+       # Your name - change this!
+       your_name = "Python Beginner"
+       
+       # Render the HTML template with variables
+       return render_template('hello.html', name=your_name, current_time=now)
+
+   if __name__ == '__main__':
+       app.run(debug=True, host='0.0.0.0')
+   ```
+
+5. **Run your updated app**:
+   ```bash
+   python hello.py
+   ```
+
+### Building a Form-Based Application
+
+Let's make your app interactive by adding a form:
+
+1. **Create a Form Template**:
+   ```bash
+   nano templates/form.html
+   ```
+
+   Add this HTML code:
+   ```html
+   <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <title>My Flask Form</title>
+       <style>
+           body {
+               font-family: Arial, sans-serif;
+               margin: 0;
+               padding: 30px;
+               background-color: #f5f5f5;
+           }
+           .container {
+               max-width: 800px;
+               margin: 0 auto;
+               background-color: white;
+               padding: 20px;
+               border-radius: 10px;
+               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+           }
+           h1 { color: #4285f4; }
+           form { margin: 20px 0; }
+           input[type="text"] {
+               padding: 8px;
+               width: 300px;
+               border: 1px solid #ddd;
+               border-radius: 4px;
+           }
+           button {
+               padding: 8px 16px;
+               background-color: #4285f4;
+               color: white;
+               border: none;
+               border-radius: 4px;
+               cursor: pointer;
+           }
+           .result {
+               margin-top: 20px;
+               padding: 15px;
+               background-color: #e8f0fe;
+               border-radius: 4px;
+           }
+       </style>
+   </head>
+   <body>
+       <div class="container">
+           <h1>Message Generator</h1>
+           
+           <form method="POST">
+               <input type="text" name="name" placeholder="Enter your name" required>
+               <button type="submit">Generate Message</button>
+           </form>
+           
+           {% if message %}
+           <div class="result">
+               <p>{{ message }}</p>
+           </div>
+           {% endif %}
+           
+           <p><a href="/">Go back to homepage</a></p>
+       </div>
+   </body>
+   </html>
+   ```
+
+2. **Update Your Flask App**:
+   ```bash
+   nano hello.py
+   ```
+
+   Replace the content with:
+   ```python
+   from flask import Flask, render_template, request
+   from datetime import datetime
+
+   app = Flask(__name__)
+
+   @app.route('/')
+   def hello_world():
+       # Get the current time
+       now = datetime.now().strftime("%H:%M:%S")
+       
+       # Your name - change this!
+       your_name = "Python Beginner"
+       
+       # Render the HTML template with variables
+       return render_template('hello.html', name=your_name, current_time=now)
+
+   @app.route('/form', methods=['GET', 'POST'])
+   def form():
+       message = None
+       
+       # Check if the form was submitted (POST request)
+       if request.method == 'POST':
+           # Get the name from the form
+           name = request.form.get('name', '')
+           
+           # Generate a message
+           message = f"Hello {name}! Welcome to Flask. The time is {datetime.now().strftime('%H:%M:%S')}"
+       
+       # Render the form template
+       return render_template('form.html', message=message)
+
+   if __name__ == '__main__':
+       app.run(debug=True, host='0.0.0.0')
+   ```
+
+3. **Add a Link to the Form**:
+   ```bash
+   nano templates/hello.html
+   ```
+
+   Update your hello.html to include a menu:
+   ```html
+   <div class="menu">
+       <a href="/form">Try our message generator</a>
+   </div>
+   ```
+
+4. **Run your updated app**:
+   ```bash
+   python hello.py
+   ```
+
+### Pushing Your Code to GitHub
+
+1. **Configure Git in the container**:
+   ```bash
+   git config --global user.name "Your Name"
+   git config --global user.email "your_email@example.com"
+   ```
+
+2. **Initialize and commit your code**:
+   ```bash
+   cd /workspace/code
+   git init
+   git add .
+   git commit -m "Add form handling to my Flask app"
+   git remote add origin git@github.com:yourusername/flask-app.git
+   git push -u origin main
+   ```
+
+## Other Applications
+
+### TKT4: React Trivia App
+- Clones your React app repo and runs it
+- Available at http://localhost:5174
+- Development workflow:
+  1. Start the container: `./start.sh tkt4`
+  2. Access the container: `docker exec -it devops-tkt4-dev bash`
+  3. Navigate to your code: `cd /workspace/code`
+  4. Your code can be accessed from the host at `./tkt4/code/`
+
+### TKT56: Next.js Issue Tracker
+- Clones your Next.js app repo and runs it
+- Available at http://localhost:5175
+- Development workflow similar to TKT4
+
+### TKT7: Redwood Blog
+- Clones your Redwood app repo and runs it
+- Web UI at http://localhost:8910, API at http://localhost:8911
+- Development workflow similar to TKT4
+
+## Services & URLs
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| MySQL Database | localhost:3306 | Database server |
+| phpMyAdmin | http://localhost:8080 | Database web administration |
+| CloudBeaver | http://localhost:8978 | SQL client |
+| Traefik Dashboard | http://localhost:8081 | Service routing dashboard |
+
+## Database Information
+
+- **Host**: mysql (from containers) or localhost:3306 (from your machine)
+- **Database**: app
+- **Username**: user
+- **Password**: password
+- **Root Password**: rootpassword
+
+## SSH Authentication for GitHub 
+
+To push changes back to GitHub repositories from containers:
+
+1. Create a SSH key pair if you don't have one:
+   ```
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+   ```
+
+2. Add the public key to your GitHub account:
+   - Copy your public key: `cat ~/.ssh/id_ed25519.pub`
+   - Go to GitHub → Settings → SSH and GPG keys → New SSH key
+
+3. Configure Git in the container:
+   ```
+   git config --global user.name "Your Name"
+   git config --global user.email "your_email@example.com"
+   ```
+
+4. When pulling/pushing in the container, use SSH URLs:
+   ```
+   # Instead of:
+   https://github.com/yourusername/repo.git
+   
+   # Use:
+   git@github.com:yourusername/repo.git
+   ```
+
+SSH keys are automatically mounted into the containers.

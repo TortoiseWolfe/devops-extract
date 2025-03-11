@@ -1,90 +1,124 @@
 # CLAUDE.md - Coding Assistant Guidelines
 
-## Key Services
-- 🚨 **Traefik Dashboard**: http://localhost:8081 - for monitoring services
-- **MySQL Database**: http://localhost:3306 
-- **phpMyAdmin**: http://localhost:8080
-- **CloudBeaver**: http://localhost:8978
+## Roadmap: DevOps Multi-App Development Environment
 
-## Recent Updates
-- Improved repository display with colorful banners at script start
-- Streamlined services section with clickable URLs
-- Added intelligent Storybook detection
-- Updated all references to use direct localhost:PORT format
-- Restructured APPS SUMMARY section for clarity
-- Added colorful error messages for missing Storybook configurations
+### Core Principles
 
-## Docker Commands
-- `docker-compose build --no-cache` - Rebuild containers (use cautiously - slows down rebuilds)
-- `docker-compose build` - Rebuild using cache when possible (faster)
-- `docker-compose up -d` - Start all services
-- `docker-compose down` - Stop all services
-- `docker-compose ps` - List running containers
-- `docker-compose logs <service>` - View container logs (web, storybook, mysql, etc.)
-- `docker-compose exec <service> sh` - Access container shell
+1. **Repository-First Architecture**: 
+   - **CRITICAL**: ALL application code must come from external repositories
+   - No local application code, only infrastructure configuration
+   - Consistent cloning and build patterns across all applications
+   - Standardized environment variable naming (TKT0_REPO_URL, TKT4_REPO_URL, etc.)
 
-## Scripts
-- `./start.sh [app_name]` - Start specific application(s) with configured repo URLs
-- `./start.sh --all` - Start all configured applications
-- `./start.sh --help` - Show all available options
-- `./test-services.sh` - Verify services are running correctly
+2. **Shared Infrastructure**:
+   - Central database services (MySQL + admin tools)
+   - Traefik for routing/proxy with dashboard
+   - Consistent networking configuration
+   - Standardized health checks
 
-## Roadmap
-- **TKT0**: Python Advanced Problem Solving environment
-  - Virtual environment for local Python development
-  - Includes Jupyter Notebook, popular libraries, and coding exercises
-  - Required before any ticket implementation
-  - Access at http://localhost:8888 for Jupyter and http://localhost:5000 for Flask apps
-  - Conserve system resources with `docker-compose stop python_notebook` when not in use
+3. **App Independence**:
+   - Each app has its own docker-compose file and Dockerfile
+   - Consistent directory structure across all apps
+   - Independent build and run cycles
+   - No special cases or app-specific code in main scripts
 
-## App Configuration
-- **TKT4**: React Trivia App (https://github.com/TortoiseWolfe/react-trivia)
-- **TKT56**: Issue Tracker App (https://github.com/TortoiseWolfe/nextjs-tutorial)
-- **TKT7**: Redwood Blog App (https://github.com/TortoiseWolfe/redwoodblog_Mar_2nd_4pm)
-  - **Architecture**: Full-stack app with separate Web and API servers
-  - **Ports**: Web (8910), API (8911)
-  - **Endpoints**: 
-    - Web UI: http://localhost:8910
-    - GraphQL API: http://localhost:8911
-  - **Database**: Uses Prisma ORM with MySQL
-  - **Setup**: After starting, run `./repos/tkt7/init-db.sh` to initialize the database
+4. **Resource Management**:
+   - Selective startup of services
+   - Memory usage monitoring and reporting
+   - Easy shutdown of resource-intensive services
+   - Consistent port allocation to prevent conflicts
 
-## Known Issues & Improvement Areas
-- **Docker Compose Version**: No explicit version specified in docker-compose files
-- **Security**: Database credentials hardcoded in docker-compose.yaml (development use only)
-- **Error Handling**: Git repository cloning failure handling could be improved
-- **Container Dependencies**: Some services may start before dependencies are fully ready
-- **Performance**: Each app builds its own Node.js container, potentially inefficient
-- **Memory Usage**: Running all services simultaneously requires significant RAM
-- **HTTPS**: Not configured for local development (HTTP only)
+### Project Structure
 
-## Resource Management
-- **Memory Monitoring**: The start script displays container memory usage
-- **Stop Unused Services**: `docker-compose stop <service>` to pause services not in use
-- **Selective Startup**: Use `./start.sh tkt0` to start only specific applications
-- **Minimal Base**: `docker-compose up -d mysql phpmyadmin` for just database services
-- **Jupyter Lab**: Consumes significant memory, stop when not actively coding
+```
+/project-root/
+├── docker-compose.yaml    # Core infrastructure only
+├── .env                   # Repository URLs configuration
+├── start.sh               # Main startup script
+├── test-services.sh       # Health verification
+├── README.md              # Documentation
+├── tkt0/                  # Python Development Environment
+│   ├── Dockerfile
+│   ├── docker-compose.tkt0.yml
+│   ├── code/              # Volume mount for user code
+│   └── data/              # Volume mount for persistent data
+├── tkt4/                  # React Trivia App
+│   ├── Dockerfile
+│   └── docker-compose.tkt4.yml
+├── tkt56/                 # Issue Tracker App
+│   ├── Dockerfile
+│   └── docker-compose.tkt56.yml
+├── tkt7/                  # Redwood Blog
+│   ├── Dockerfile
+│   └── docker-compose.tkt7.yml
+└── traefik/               # Traefik configuration
+    └── config.yml
+```
 
-## Code Style Guidelines
-- **Docker:** Use Alpine-based images, implement health checks, expose specific ports
-- **Services:** Main Web (5173), Main Storybook (6006), MySQL (3306), phpMyAdmin (8080), CloudBeaver (8978)
-- **Port Assignments:**
-  - Development: Web (5173), Storybook (6006)
-  - TKT0: Jupyter (8888), Flask (5000)
-  - TKT4: Web (5174), Storybook (6007)
-  - TKT56: Web (5175), Storybook (6008)
-  - TKT7: Web (8910), API (8911), Storybook (6009)
-  - Traefik Dashboard: 8081
-- **Scripts:** Include proper error handling, clear error messages, non-zero exit codes on failure
-- **Environment:** Use environment variables for configuration (REPO_URL, TKT4_REPO_URL, etc.)
-- **Testing:** HTTP endpoint verification, container health status checks
+### Port Assignments
 
-## Structure
-This is primarily a DevOps configuration for running React applications with Storybook, MySQL, and database management tools. Traefik is used as the reverse proxy to route requests to the appropriate services.
+| Service | Port | Description |
+|---------|------|-------------|
+| Traefik Dashboard | 8081 | Service monitoring |
+| MySQL | 3306 | Database server |
+| phpMyAdmin | 8080 | Database admin |
+| CloudBeaver | 8978 | SQL client |
+| TKT0 Flask | 5000 | Python learning app |
+| TKT0 Jupyter | 8888 | Jupyter notebooks |
+| TKT4 Web | 5174 | React trivia app |
+| TKT4 Storybook | 6007 | Trivia app components |
+| TKT56 Web | 5175 | Issue tracker app |
+| TKT56 Storybook | 6008 | Issue tracker components |
+| TKT7 Web | 8910 | Redwood blog UI |
+| TKT7 API | 8911 | Redwood GraphQL API |
+| TKT7 Storybook | 6009 | Redwood components |
 
-## Troubleshooting
-1. Always check the Traefik dashboard (http://localhost:8081) first for service health
-2. Use `./test-services.sh` to verify all endpoints are responding correctly
-3. Check application-specific logs with `docker-compose logs [service]`
-4. For Git clone failures, check repository URLs in .env file
-5. If containers restart repeatedly, check health status with `docker ps` and logs
+### Application Summaries
+
+1. **TKT0** - Python Learning Environment
+   - Python Flask + Jupyter notebook environment
+   - Educational platform for learning Python concepts
+   - External repository containing all code (NOT LOCAL)
+   - Educational storybook integrated into Flask app
+
+2. **TKT4** - React Trivia App
+   - React-based quiz application
+   - Standard React with Storybook integration
+   - External repository only
+
+3. **TKT56** - Issue Tracker App
+   - Next.js issue tracking application
+   - Integrated Storybook for components
+   - External repository only
+
+4. **TKT7** - Redwood Blog
+   - Full-stack Redwood.js application
+   - Separate web and API servers
+   - Prisma ORM database integration
+   - External repository only
+
+### Implementation Phases
+
+1. **Infrastructure Setup**
+   - Core docker-compose.yaml with database services
+   - Traefik reverse proxy configuration
+   - Network and volume setup
+   - Basic health check implementation
+
+2. **Script Development**
+   - Repository configuration script
+   - Main start script with selective app startup
+   - Service testing and verification
+   - Memory usage monitoring
+
+3. **App Integration**
+   - Standardized app docker-compose files
+   - Consistent repository cloning pattern
+   - Port allocation and service discovery
+   - Health check standardization
+
+4. **Documentation & Testing**
+   - Comprehensive README
+   - App-specific documentation
+   - Full system testing
+   - Resource usage optimization

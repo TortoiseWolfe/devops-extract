@@ -1,0 +1,45 @@
+services:
+  tkt7-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT7_REPO_URL=${TKT7_REPO_URL}
+    container_name: devops-tkt7-web
+    ports:
+      - "8910:8910"
+      - "8911:8911"
+    environment:
+      - TKT7_REPO_URL=${TKT7_REPO_URL}
+      - DATABASE_URL=mysql://user:password@mysql:3306/app
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt7-web.rule=Host(`tkt7.localhost`)"
+      - "traefik.http.services.tkt7-web.loadbalancer.server.port=8910"
+      - "traefik.http.routers.tkt7-api.rule=Host(`tkt7-api.localhost`)"
+      - "traefik.http.services.tkt7-api.loadbalancer.server.port=8911"
+      
+  tkt7-storybook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT7_REPO_URL=${TKT7_REPO_URL}
+    container_name: devops-tkt7-storybook
+    ports:
+      - "6009:6006"
+    environment:
+      - TKT7_REPO_URL=${TKT7_REPO_URL}
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt7-storybook.rule=Host(`tkt7-storybook.localhost`)"
+      - "traefik.http.services.tkt7-storybook.loadbalancer.server.port=6006"
+    command: ["npx", "storybook", "dev", "-p", "6006", "--no-open"]
+
+networks:
+  app-network:
+    external: true

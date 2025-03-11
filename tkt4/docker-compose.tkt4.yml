@@ -1,0 +1,41 @@
+services:
+  tkt4-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT4_REPO_URL=${TKT4_REPO_URL}
+    container_name: devops-tkt4-web
+    ports:
+      - "5174:5174"
+    environment:
+      - TKT4_REPO_URL=${TKT4_REPO_URL}
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt4.rule=Host(`tkt4.localhost`)"
+      - "traefik.http.services.tkt4.loadbalancer.server.port=5174"
+
+  tkt4-storybook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - TKT4_REPO_URL=${TKT4_REPO_URL}
+    container_name: devops-tkt4-storybook
+    ports:
+      - "6007:6006"
+    environment:
+      - TKT4_REPO_URL=${TKT4_REPO_URL}
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt4-storybook.rule=Host(`tkt4-storybook.localhost`)"
+      - "traefik.http.services.tkt4-storybook.loadbalancer.server.port=6006"
+    command: ["npm", "run", "storybook", "--", "--port", "6006", "--host", "0.0.0.0"]
+
+networks:
+  app-network:
+    external: true

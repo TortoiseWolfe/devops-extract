@@ -1,0 +1,35 @@
+services:
+  tkt0-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-tkt0-dev
+    ports:
+      - "5000:5000"
+      - "8888:8888"
+    volumes:
+      - ./code:/workspace/code
+      - ./data:/workspace/data
+      - ./backup:/workspace/backup
+      - ~/.ssh:/workspace/.ssh:ro
+      - ../.env:/workspace/.env:ro
+    environment:
+      - TKT0_REPO_URL
+      - GIT_USER_NAME
+      - GIT_USER_EMAIL
+      - START_JUPYTER=${START_JUPYTER:-true}
+      - START_FLASK=${START_FLASK:-true}
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.tkt0-flask.rule=Host(`tkt0.localhost`)"
+      - "traefik.http.services.tkt0-flask.loadbalancer.server.port=5000"
+      - "traefik.http.routers.tkt0-jupyter.rule=Host(`jupyter.localhost`)"
+      - "traefik.http.services.tkt0-jupyter.loadbalancer.server.port=8888"
+
+networks:
+  app-network:
+    external: true

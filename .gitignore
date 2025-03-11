@@ -36,4 +36,4 @@ yarn-error.log*
 
 # Cloned repository temp directories
 /[web]/
-/[storybook]/
+/[storybook]/tkt0/code/.git/

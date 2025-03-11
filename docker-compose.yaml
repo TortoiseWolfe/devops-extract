@@ -1,279 +1,84 @@
-# Base services (databases and tools)
 services:
-  # Traefik reverse proxy
+  mysql:
+    image: mysql:8.0
+    container_name: devops-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: app
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      app-network:
+        aliases:
+          - mysql
+    healthcheck:
+      test: mysqladmin ping -h localhost -u root -prootpassword
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: devops-phpmyadmin
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.phpmyadmin.rule=Host(`phpmyadmin.localhost`)"
+      - "traefik.http.services.phpmyadmin.loadbalancer.server.port=80"
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    container_name: devops-cloudbeaver
+    ports:
+      - "8978:8978"
+    volumes:
+      - cloudbeaver-data:/opt/cloudbeaver/workspace
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cloudbeaver.rule=Host(`cloudbeaver.localhost`)"
+      - "traefik.http.services.cloudbeaver.loadbalancer.server.port=8978"
+
   traefik:
-    image: traefik:v2.10
+    image: traefik:v2.9
+    container_name: devops-traefik
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      # DNS config for .localhost domains
-      - "--providers.file.directory=/etc/traefik/config"
-      - "--providers.file.watch=true"
-      # Debug mode for easier troubleshooting
-      - "--log.level=DEBUG"
+      - "--providers.file.directory=/etc/traefik/conf"
     ports:
-      - "80:80"     # HTTP
-      - "443:443"   # HTTPS
-      - "8081:8080" # Dashboard
+      - "80:80"
+      - "8081:8080"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./traefik:/etc/traefik/config
+      - ./traefik:/etc/traefik/conf
+    networks:
+      - app-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.traefik.rule=Host(`traefik.localhost`)"
-      - "traefik.http.routers.traefik.service=api@internal"
-    networks:
-      - app-network
-    restart: always
-
-  # Logging service
-  logger:
-    image: gliderlabs/logspout
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: syslog://localhost:514
-    restart: always
-    networks:
-      - app-network
-  # Database services
-  mysql:
-    image: mysql:8.0
-    restart: always
-    environment:
-      - MYSQL_DATABASE=app
-      - MYSQL_USER=user
-      - MYSQL_PASSWORD=password
-      - MYSQL_ROOT_PASSWORD=rootpassword
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    networks:
-      - app-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-      
-  cloudbeaver:
-    image: dbeaver/cloudbeaver:latest
-    restart: always
-    ports:
-      - "8978:8978"
-    volumes:
-      - cloudbeaver_data:/opt/cloudbeaver/workspace
-    depends_on:
-      - mysql
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:8978"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    networks:
-      - app-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-      
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    restart: always
-    ports:
-      - "8080:80"
-    environment:
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
-      - MYSQL_ROOT_PASSWORD=rootpassword
-    depends_on:
-      - mysql
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    networks:
-      - app-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # Development container - defined in main docker-compose file
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - REPO_URL=${REPO_URL}
-    ports:
-      - "5173:5173"  # Direct port access - no hosts file needed!
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`dev.localhost`)"
-      - "traefik.http.services.web.loadbalancer.server.port=5173"
-    environment:
-      - REPO_URL=${REPO_URL}
-    restart: always
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:5173"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # Python environment for TKT0
-  python_notebook:
-    image: jupyter/scipy-notebook:latest
-    ports:
-      - "8888:8888"  # Jupyter Notebook
-    volumes:
-      - ./data/python:/home/jovyan/work
-    environment:
-      - JUPYTER_ENABLE_LAB=yes
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.python.rule=Host(`python.localhost`)"
-      - "traefik.http.services.python.loadbalancer.server.port=8888"
-    command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''", "--ip=0.0.0.0"]
-    restart: always
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/lab"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # Python Flask environment for web development
-  python_flask:
-    build:
-      context: ./repos/tkt0
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"  # Flask app
-    volumes:
-      - ./repos/tkt0:/app
-    environment:
-      - FLASK_APP=app.py
-      - FLASK_ENV=development
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.flask.rule=Host(`flask.localhost`)"
-      - "traefik.http.services.flask.loadbalancer.server.port=5000"
-    restart: always
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:5000"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # Storybook for development container
-  storybook:
-    build:
-      context: .
-      dockerfile: DockerfileNode
-      args:
-        - REPO_URL=${REPO_URL}
-    ports:
-      - "6006:6006"  # Direct port access - no hosts file needed!
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.storybook.rule=Host(`storybook.localhost`)"
-      - "traefik.http.services.storybook.loadbalancer.server.port=6006"
-    environment:
-      - REPO_URL=${REPO_URL}
-    command: [
-      "sh", "-c", 
-      "echo -e '\\n\\n🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷' && \
-       echo '🚀 MAIN DEVELOPMENT APP 💻' && \
-       echo '📚 STORYBOOK SERVICE STARTING 📚' && \
-       echo '🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷🔷' && \
-       if [ -d /app ]; then cd /app; fi && \
-       if [ -f package.json ]; then \
-         if grep -q '\"storybook\"' package.json || [ -d '.storybook' ] || [ -d 'storybook' ]; then \
-           echo '🎉 Storybook configuration detected!' && \
-           echo '🌐 Storybook will be available at http://localhost:6006 when ready' && \
-           npm run storybook -- --host 0.0.0.0 || yarn storybook --host 0.0.0.0; \
-         else \
-           echo -e '\\n🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡' && \
-           echo '⚠️  MAIN DEVELOPMENT APP ⚠️' && \
-           echo '⚠️  NO STORYBOOK CONFIGURATION FOUND ⚠️' && \
-           echo '🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡🟡' && \
-           echo '\\n💡 TIP: If you want to use Storybook with this project:' && \
-           echo '  1. Add Storybook to your project with: npx storybook@latest init' && \
-           echo '  2. Commit the changes to your repository' && \
-           echo '  3. Restart this container' && \
-           echo '\\n✅ Storybook container will exit gracefully.\\n' && \
-           exit 0; \
-         fi; \
-       else \
-         echo -e '\\n🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴' && \
-         echo '❌ MAIN DEVELOPMENT APP ❌' && \
-         echo '❌ ERROR: No package.json found in repository ❌' && \
-         echo '🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴' && \
-         echo '\\n🔎 REPO_URL setting: ${REPO_URL}' && \
-         echo '📋 Check your .env file or command line arguments' && \
-         exit 1; \
-       fi"
-    ]
-    restart: always
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:6006"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-        
-  # Other application services (defined in separate files)  
-  # These will be included via docker-compose.override.yml or specific app configs
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
 
 networks:
   app-network:
-    driver: bridge
+    external: true
 
 volumes:
-  mysql_data:
-  cloudbeaver_data:
+  mysql-data:
+  cloudbeaver-data:
