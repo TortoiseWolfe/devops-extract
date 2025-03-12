@@ -1,0 +1,95 @@
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+    border-bottom: 2px solid #3F51B5;
+    padding-bottom: 10px;
+}
+
+h2 {
+    color: #3F51B5;
+}
+
+.card {
+    background: white;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+code, pre {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-family: monospace;
+    font-size: 14px;
+}
+
+pre {
+    padding: 10px;
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+ol, ul {
+    margin-left: 20px;
+}
+
+.code-container {
+    position: relative;
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 10px;
+    margin: 10px 0;
+}
+
+.copy-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #3F51B5;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.copy-button:hover {
+    background: #303F9F;
+}
+
+.success-message {
+    color: #3F51B5;
+    background: #E8EAF6;
+    padding: 10px;
+    border-radius: 5px;
+    border-left: 4px solid #3F51B5;
+    margin: 10px 0;
+    font-weight: bold;
+}

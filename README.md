@@ -31,6 +31,30 @@ A Docker-based development environment for multiple applications with shared inf
    ./test-services.sh
    ```
 
+## Trying Different Projects
+
+This environment follows a **repository-first architecture**, which means all code comes from external repositories. You can easily switch between different projects:
+
+1. Edit the `.env` file and modify the repository URLs:
+   ```bash
+   # Comment out the current repository
+   # TKT0_REPO_URL=https://github.com/yourusername/python-learning
+   
+   # Use one of these alternatives instead
+   TKT0_REPO_URL=https://github.com/pallets/flask-tutorial
+   # TKT0_REPO_URL=https://github.com/miguelgrinberg/microblog
+   # TKT0_REPO_URL=https://github.com/realpython/flask-boilerplate
+   ```
+
+2. Restart the service to pull code from the new repository:
+   ```bash
+   ./start.sh tkt0
+   ```
+
+3. Your code directory will now contain files from the new repository!
+
+This allows you to quickly explore different projects without reconfiguring your environment.
+
 ## Python Learning Environment (TKT0)
 
 Our Python environment (TKT0) provides a full Flask and Jupyter setup for learning Python and web development.
@@ -323,16 +347,46 @@ Let's make your app interactive by adding a form:
   2. Access the container: `docker exec -it devops-tkt4-dev bash`
   3. Navigate to your code: `cd /workspace/code`
   4. Your code can be accessed from the host at `./tkt4/code/`
+- Try different React projects:
+  ```bash
+  # Edit the .env file and change TKT4_REPO_URL
+  # TKT4_REPO_URL=https://github.com/yourusername/react-trivia
+  TKT4_REPO_URL=https://github.com/nabendu82/react-trivia
+  # TKT4_REPO_URL=https://github.com/florinpop17/quiz-app
+  
+  # Restart the service
+  ./start.sh tkt4
+  ```
 
 ### TKT56: Next.js Issue Tracker
 - Clones your Next.js app repo and runs it
 - Available at http://localhost:5175
 - Development workflow similar to TKT4
+- Try different Next.js projects:
+  ```bash
+  # Edit the .env file and change TKT56_REPO_URL
+  # TKT56_REPO_URL=https://github.com/yourusername/nextjs-tutorial
+  TKT56_REPO_URL=https://github.com/vercel/next.js
+  # TKT56_REPO_URL=https://github.com/vercel/next-learn
+  
+  # Restart the service
+  ./start.sh tkt56
+  ```
 
 ### TKT7: Redwood Blog
 - Clones your Redwood app repo and runs it
 - Web UI at http://localhost:8910, API at http://localhost:8911
 - Development workflow similar to TKT4
+- Try different Redwood projects:
+  ```bash
+  # Edit the .env file and change TKT7_REPO_URL
+  # TKT7_REPO_URL=https://github.com/yourusername/redwoodblog
+  TKT7_REPO_URL=https://github.com/redwoodjs/example-blog
+  # TKT7_REPO_URL=https://github.com/redwoodjs/redwood-tutorial
+  
+  # Restart the service
+  ./start.sh tkt7
+  ```
 
 ## Services & URLs
 

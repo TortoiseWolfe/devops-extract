@@ -8,11 +8,14 @@ services:
       - "5000:5000"
       - "8888:8888"
     volumes:
-      - ./code:/workspace/code
+      # Mount code directory for persistence between restarts
+      - tkt0_code_vol:/workspace/code
       - ./data:/workspace/data
       - ./backup:/workspace/backup
       - ~/.ssh:/workspace/.ssh:ro
       - ../.env:/workspace/.env:ro
+      # Mount templates directory for default templates
+      - .:/workspace/tkt0:ro
     environment:
       - TKT0_REPO_URL
       - GIT_USER_NAME
@@ -33,3 +36,7 @@ services:
 networks:
   app-network:
     external: true
+    
+volumes:
+  tkt0_code_vol:
+    # Named volume for TKT0 code

@@ -6,10 +6,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome to Your Python Development Environment!</h1>
+        <h1>Welcome to Your MOD0 Python Development Environment!</h1>
         <div class="card">
             <h2>Getting Started</h2>
-            <p>This is your starter Flask application. Edit the files in <code>/workspace/code</code> to customize your app.</p>
+            <p>This is your MOD0 Flask application. Edit the files in <code>/workspace/code</code> to customize your app.</p>
             <p>Visit <a href="/tutorial">the tutorial page</a> for more information on how to develop with Flask.</p>
         </div>
         
@@ -18,7 +18,45 @@
             <ol>
                 <li>Edit the code in the mounted volume</li>
                 <li>Flask will automatically reload when you save changes</li>
-                <li>Access Jupyter at <a href="http://jupyter.localhost" target="_blank">http://jupyter.localhost</a></li>
+                <li>Access Jupyter at <a href="http://mod0-jupyter.localhost" target="_blank">http://mod0-jupyter.localhost</a></li>
+            </ol>
+        </div>
+        
+        <div class="card">
+            <h2>Repository-First Architecture</h2>
+            <p>This environment uses a <strong>repository-first architecture</strong>, which means all application code comes from external repositories.</p>
+            
+            <h3>Switch to a Different Project</h3>
+            <p>You can easily try different Flask projects by changing the repository URL:</p>
+            <ol>
+                <li>Edit the <code>.env</code> file in the root directory:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+nano /home/turtle_wolfe/repos/devops-extract/.env</pre>
+                    </div>
+                </li>
+                <li>Find and change the <code>MOD0_REPO_URL</code> line:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+# Comment out the current repository
+# MOD0_REPO_URL=https://github.com/TortoiseWolfe/CodeHouse
+
+# Uncomment or add one of these alternatives
+MOD0_REPO_URL=https://github.com/pallets/flask-tutorial
+# MOD0_REPO_URL=https://github.com/miguelgrinberg/microblog
+# MOD0_REPO_URL=https://github.com/realpython/flask-boilerplate</pre>
+                    </div>
+                </li>
+                <li>Restart the service to clone the new repository:
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                        <pre>
+cd /home/turtle_wolfe/repos/devops-extract
+./start.sh mod0</pre>
+                    </div>
+                </li>
             </ol>
         </div>
         

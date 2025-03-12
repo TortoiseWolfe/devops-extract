@@ -1,0 +1,35 @@
+services:
+  mod0-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-mod0-dev
+    ports:
+      - "5001:5000"
+      - "8889:8888"
+    volumes:
+      # Mount SSH keys and .env
+      - ~/.ssh:/workspace/.ssh:ro
+      - ../.env:/workspace/.env:ro
+      # Mount templates directory for default templates
+      - .:/workspace/mod0:ro
+    environment:
+      - MOD0_REPO_URL
+      - GIT_USER_NAME
+      - GIT_USER_EMAIL
+      - START_JUPYTER=${START_JUPYTER:-true}
+      - START_FLASK=${START_FLASK:-true}
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mod0-flask.rule=Host(`mod0.localhost`)"
+      - "traefik.http.services.mod0-flask.loadbalancer.server.port=5000"
+      - "traefik.http.routers.mod0-jupyter.rule=Host(`mod0-jupyter.localhost`)"
+      - "traefik.http.services.mod0-jupyter.loadbalancer.server.port=8888"
+
+networks:
+  app-network:
+    external: true

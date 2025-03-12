@@ -397,6 +397,42 @@ git commit -m "Add form handling to my Flask app"
 git push</pre>
             </div>
         </div>
+        
+        <div class="card">
+            <h2>Exploring Different Flask Projects</h2>
+            <p><strong>IMPORTANT:</strong> This environment uses a <u>repository-first architecture</u>, which means ALL code comes from external repositories! You can easily switch between different Flask projects with a simple edit to the .env file.</p>
+            
+            <h3>How to Switch Repositories</h3>
+            <p>You can explore different Flask projects by changing the repository URL in the <code>.env</code> file:</p>
+            
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Edit the .env file in the root directory
+nano /home/turtle_wolfe/repos/devops-extract/.env
+
+# Find the TKT0_REPO_URL line and change it to a different repository
+# For example:
+# TKT0_REPO_URL=https://github.com/pallets/flask-tutorial
+# TKT0_REPO_URL=https://github.com/miguelgrinberg/microblog
+# TKT0_REPO_URL=https://github.com/realpython/flask-boilerplate</pre>
+            </div>
+            
+            <h3>Restart the Environment</h3>
+            <p>After changing the repository URL, restart the TKT0 service to clone the new repository:</p>
+            
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Navigate to the project root
+cd /home/turtle_wolfe/repos/devops-extract
+
+# Restart only the TKT0 service
+./start.sh tkt0</pre>
+            </div>
+            
+            <p>Your code directory will now contain the files from the new repository!</p>
+        </div>
     </div>
     <script>
         function copyCode(button) {

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Getting Started with MOD0</h1>
+        <p><a href="/">&larr; Back to Home</a></p>
+        
+        <div class="card">
+            <h2>What is MOD0?</h2>
+            <p>MOD0 is an additional Python development environment that uses the repository-first architecture pattern, allowing you to work with a separate repository while keeping your TKT0 environment untouched.</p>
+        </div>
+
+        <div class="card">
+            <h2>Repository-First Architecture</h2>
+            <p>The key principles of repository-first architecture include:</p>
+            <ul>
+                <li>All application code comes from external repositories</li>
+                <li>Configuration is kept separate from application code</li>
+                <li>Multiple repositories can be used in the same environment</li>
+                <li>Easy switching between different projects</li>
+            </ul>
+            <p>With MOD0, you can experiment with additional repositories without affecting your main TKT0 environment.</p>
+        </div>
+        
+        <div class="card">
+            <h2>Adding a New Repository</h2>
+            <p>To configure a repository for MOD0:</p>
+            
+            <h3>Step 1: Edit the .env file</h3>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Edit the .env file
+nano /home/turtle_wolfe/repos/devops-extract/.env
+
+# Add a line for MOD0_REPO_URL
+MOD0_REPO_URL=https://github.com/username/repository.git</pre>
+            </div>
+            
+            <h3>Step 2: Start the MOD0 Environment</h3>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">Copy</button>
+                <pre>
+# Navigate to the project root
+cd /home/turtle_wolfe/repos/devops-extract
+
+# Start the MOD0 service
+./start.sh mod0</pre>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Working with Multiple Environments</h2>
+            <p>Benefits of using both TKT0 and MOD0:</p>
+            <ul>
+                <li>Compare two different Flask projects side by side</li>
+                <li>Test migration of code from one repository to another</li>
+                <li>Maintain a stable environment while experimenting with new code</li>
+                <li>Run two Python applications with different dependencies</li>
+            </ul>
+            
+            <h3>Accessing Your Environments</h3>
+            <p>TKT0 is available at:</p>
+            <ul>
+                <li>Flask: <a href="http://tkt0.localhost" target="_blank">http://tkt0.localhost</a> or <a href="http://localhost:5000" target="_blank">http://localhost:5000</a></li>
+                <li>Jupyter: <a href="http://jupyter.localhost" target="_blank">http://jupyter.localhost</a> or <a href="http://localhost:8888" target="_blank">http://localhost:8888</a></li>
+            </ul>
+            
+            <p>MOD0 is available at:</p>
+            <ul>
+                <li>Flask: <a href="http://mod0.localhost" target="_blank">http://mod0.localhost</a> or <a href="http://localhost:5001" target="_blank">http://localhost:5001</a></li>
+                <li>Jupyter: <a href="http://mod0-jupyter.localhost" target="_blank">http://mod0-jupyter.localhost</a> or <a href="http://localhost:8889" target="_blank">http://localhost:8889</a></li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        function copyCode(button) {
+            const pre = button.nextElementSibling;
+            const code = pre.textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                // Change button text to "Copied!"
+                button.textContent = "Copied!";
+                
+                // Reset button text after 2 seconds
+                setTimeout(() => {
+                    button.textContent = "Copy";
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy code');
+            });
+        }
+    </script>
+</body>
+</html>

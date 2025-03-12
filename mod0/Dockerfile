@@ -19,6 +19,8 @@ RUN apt-get update && apt-get install -y \
 RUN pip install --no-cache-dir \
     flask \
     flask-cors \
+    flask-sqlalchemy \
+    flask-migrate \
     requests \
     pytest \
     python-dotenv \
@@ -45,7 +47,7 @@ RUN chmod -R 777 /workspace
 # Create startup script
 RUN echo '#!/bin/bash\n\
 echo "=================================================="\n\
-echo "  Python Development Environment"\n\
+echo "  Python Module Development Environment (MOD0)"\n\
 echo "=================================================="\n\
 echo "- Your code is in /workspace/code"\n\
 echo "- Data files are in /workspace/data"\n\
@@ -66,13 +68,13 @@ fi\n\
 \n\
 # Debug environment variables\n\
 echo "Environment variable check:"\n\
-echo "TKT0_REPO_URL='$TKT0_REPO_URL'"\n\
-env | grep -E "TKT0|GIT_USER"\n\
+echo "MOD0_REPO_URL='$MOD0_REPO_URL'"\n\
+env | grep -E "MOD0|GIT_USER"\n\
 cat /workspace/.env 2>/dev/null || echo "No .env file in /workspace"\n\
 \n\
 # Clone repository if provided - must happen BEFORE starting services\n\
-if [ -n "$TKT0_REPO_URL" ]; then\n\
-  echo "Repository URL is set: $TKT0_REPO_URL"\n\
+if [ -n "$MOD0_REPO_URL" ]; then\n\
+  echo "Repository URL is set: $MOD0_REPO_URL"\n\
   if [ ! -d "/workspace/code/.git" ]; then\n\
     if [ "$(ls -A /workspace/code)" ]; then\n\
       echo "Backing up existing files..."\n\
@@ -80,11 +82,11 @@ if [ -n "$TKT0_REPO_URL" ]; then\n\
       cp -r /workspace/code/* /workspace/backup/ 2>/dev/null || true\n\
       find /workspace/code -mindepth 1 -not -path "*/\\.*" -delete\n\
     fi\n\
-    echo "Cloning repository from $TKT0_REPO_URL..."\n\
-    git clone "$TKT0_REPO_URL" /workspace/code\n\
+    echo "Cloning repository from $MOD0_REPO_URL..."\n\
+    git clone "$MOD0_REPO_URL" /workspace/code\n\
   fi\n\
 else\n\
-  echo "WARNING: TKT0_REPO_URL is empty or not set"\n\
+  echo "WARNING: MOD0_REPO_URL is empty or not set"\n\
 fi\n\
 \n\
 # Check for app.py and create if needed\n\
@@ -93,14 +95,14 @@ if [ ! -f "/workspace/code/app.py" ]; then\n\
   mkdir -p /workspace/code/templates /workspace/code/static/css\n\
   \n\
   # Copy our app.py file from the repository\n\
-  cp -f /workspace/tkt0/app.py /workspace/code/app.py || echo \"Warning: Could not copy app.py from tkt0 directory\"\n\
+  cp -f /workspace/mod0/app.py /workspace/code/app.py || echo \"Warning: Could not copy app.py from mod0 directory\"\n\
   \n\
   # Set up template and static directories in code\n\
   mkdir -p /workspace/code/templates /workspace/code/static/css\n\
   \n\
-  # Copy our templates from the mounted tkt0 directory\n\
-  cp -f /workspace/tkt0/templates/* /workspace/code/templates/ 2>/dev/null || echo \"Warning: No template files found in /workspace/tkt0/templates\"\n\
-  cp -f /workspace/tkt0/static/css/* /workspace/code/static/css/ 2>/dev/null || echo \"Warning: No CSS files found in /workspace/tkt0/static/css\"\n\
+  # Copy our templates from the mounted mod0 directory\n\
+  cp -f /workspace/mod0/templates/* /workspace/code/templates/ 2>/dev/null || echo \"Warning: No template files found in /workspace/mod0/templates\"\n\
+  cp -f /workspace/mod0/static/css/* /workspace/code/static/css/ 2>/dev/null || echo \"Warning: No CSS files found in /workspace/mod0/static/css\"\n\
 fi\n\
 \n\
 # NOW start services after repository and files are prepared\n\
@@ -115,7 +117,7 @@ if [ "$START_FLASK" = "true" ]; then\n\
   cd /workspace/code\n\
   if [ -f "app.py" ]; then\n\
     export FLASK_APP=app.py\n\
-    export TKT0_REPO_URL="$TKT0_REPO_URL"\n\
+    export MOD0_REPO_URL="$MOD0_REPO_URL"\n\
     flask run --host=0.0.0.0 &\n\
     echo "Flask started successfully on port 5000"\n\
   else\n\
